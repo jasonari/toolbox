@@ -1,6 +1,6 @@
 import argparse
 import re
-import sys
+import string
 from pathlib import Path
 from typing import cast
 
@@ -18,7 +18,6 @@ def decode_client_log(content: bytes) -> bytes:
 
 
 def find_latest_gacha_history_url(content: bytes) -> str | None:
-    # find matches by finditer
     matches = list(GACHA_HISTORY_URL_PATTERN.finditer(content))
 
     if not matches:
@@ -32,20 +31,19 @@ def extract_gacha_history_url(log_file: Path) -> str | None:
 
     for candidate in (content, decode_client_log(content)):
         url = find_latest_gacha_history_url(candidate)
+
         if url is not None:
             return url
 
     return None
 
 
-# parse arguments to Path
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
-    _ = parser.add_argument(
+    parser.add_argument(
         "--game-path",
         type=Path,
-        required=True,
         help="Wuthering Waves Game Path",
     )
 
@@ -56,31 +54,63 @@ def get_client_log_path(game_path: Path) -> Path:
     game_path = game_path.expanduser().resolve()
 
     if not game_path.is_dir():
-        logger.error(f"Game directory does not exist: {game_path}")
         raise FileNotFoundError(f"Game directory does not exist: {game_path}")
 
     log_file = game_path / "Client" / "Saved" / "Logs" / "Client.log"
 
     if not log_file.is_file():
-        logger.error(f"Log does not exist: {log_file}")
+        raise FileNotFoundError(f"Log file does not exist: {log_file}")
 
     return log_file
 
 
-def main() -> int:
-    logger.info("Get Gacha Url")
+def find_game_path_from_common_locations() -> Path | None:
+    common_paths = [
+        Path("Wuthering Waves Game"),
+        Path("Wuthering Waves") / "Wuthering Waves Game",
+        Path("Games") / "Wuthering Waves Game",
+        Path("Games") / "Wuthering Waves" / "Wuthering Waves Game",
+        Path("code") / "toolbox",
+    ]
 
+    for drive_letter in string.ascii_uppercase:
+        drive = Path(f"{drive_letter}:/")
+
+        if not drive.exists():
+            continue
+
+        for relative_path in common_paths:
+            game_path = drive / relative_path
+
+            if game_path.is_dir():
+                return game_path
+
+    return None
+
+
+def main() -> int:
     args = parse_args()
-    game_path = cast(Path, args.game_path)
+    game_path = cast(Path | None, args.game_path)
+
+    if game_path is None:
+        game_path = find_game_path_from_common_locations()
+
+    if game_path is None:
+        logger.error("Game directory not found")
+        return 1
 
     try:
         log_file = get_client_log_path(game_path)
-
-    except FileNotFoundError as error:
-        print(error)
+        url = extract_gacha_history_url(log_file)
+    except OSError as error:
+        logger.error(str(error))
         return 1
 
-    logger.info(f"Found log file: {log_file}")
+    if url is None:
+        logger.error("Gacha history URL not found")
+        return 1
+
+    logger.info(f"Url: {url}")
     return 0
 
 
