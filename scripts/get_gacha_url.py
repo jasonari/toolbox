@@ -4,6 +4,8 @@ import string
 from pathlib import Path
 from typing import cast
 
+import pyperclip
+
 from utils.logger import logger
 
 GACHA_HISTORY_URL_PATTERN = re.compile(
@@ -113,8 +115,9 @@ def main() -> int:
         logger.error("Gacha history URL not found")
         return 1
 
-    logger.success(f"Gacha url found: {url}")
-
+    logger.info(f"Gacha url found: {url}")
+    pyperclip.copy(url)
+    logger.success("Copied to clipboard")
     return 0
 
 
