@@ -1,18 +1,13 @@
-import sys
-from collections.abc import Generator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from time import sleep
 
 from rich.console import Console
 from rich.status import Status
-
-console = Console()
-error_console = Console(stderr=True)
+from rich.text import Text
 
 
 class Spinner:
-    _status: Status
-
     def __init__(self, status: Status) -> None:
         self._status = status
 
@@ -21,38 +16,50 @@ class Spinner:
 
 
 class Logger:
-    @staticmethod
-    def info(message: str) -> None:
-        console.print(f"  {message}")
+    def __init__(self) -> None:
+        self._console = Console()
+        self._error_console = Console(stderr=True)
 
-    @staticmethod
-    def success(message: str) -> None:
-        console.print(f"[green]✔[/green] {message}")
+    def info(self, message: str) -> None:
+        self._console.print(Text(f"  {message}"))
 
-    @staticmethod
-    def warning(message: str) -> None:
-        console.print(f"[yellow]⚠[/yellow] {message}")
+    def success(self, message: str) -> None:
+        self._print_icon("✔", message, "green")
 
-    @staticmethod
-    def error(message: str, file=sys.stderr) -> None:
-        if file is sys.stderr:
-            error_console.print(f"[red]✘[/red] {message}")
-        else:
-            console.print(f"[red]✘[/red] {message}")
+    def warning(self, message: str) -> None:
+        self._print_icon("⚠", message, "yellow")
 
-    @staticmethod
-    def command(message: str) -> None:
-        console.print(f"[dim]$ {message}[/dim]")
+    def error(self, message: str) -> None:
+        self._print_icon("✘", message, "red", console=self._error_console)
 
-    @staticmethod
+    def command(self, message: str) -> None:
+        text = Text("$ ", style="dim")
+        text.append(message, style="dim")
+        self._console.print(text)
+
     @contextmanager
-    def spinner(message: str) -> Generator[Spinner]:
-        with console.status(
+    def spinner(self, message: str) -> Iterator[Spinner]:
+        with self._console.status(
             message,
             spinner="dots",
             spinner_style="cyan",
         ) as status:
             yield Spinner(status)
+
+    def _print_icon(
+        self,
+        icon: str,
+        message: str,
+        style: str,
+        *,
+        console: Console | None = None,
+    ) -> None:
+        output = console or self._console
+
+        text = Text()
+        text.append(icon, style=style)
+        text.append(f" {message}")
+        output.print(text)
 
 
 logger = Logger()
@@ -62,9 +69,11 @@ if __name__ == "__main__":
     logger.info("info")
     logger.warning("warning")
     logger.error("error")
-    logger.command("command")
+    logger.command("uv sync")
+
     with logger.spinner("Working...") as spinner:
         sleep(2)
         spinner.update("Installing dependencies...")
-        sleep(3)
-    logger.success("Done in 5s.")
+        sleep(2)
+
+    logger.success("Done in 4s.")
