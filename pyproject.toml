@@ -1,7 +1,7 @@
 [project]
 name = "toolbox"
 version = "0.1.0"
-description = "Add your description here"
+description = "Personal Python toolbox"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -13,3 +13,7 @@ dependencies = [
 dev = [
     "pyinstaller>=6.22.2",
 ]
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13"]
+build-backend = "uv_build"
