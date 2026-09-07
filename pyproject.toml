@@ -12,8 +12,26 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pyinstaller>=6.22.2",
+    "python-semantic-release>=10,<11",
 ]
 
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13"]
 build-backend = "uv_build"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+commit_parser = "conventional"
+tag_format = "v{version}"
+allow_zero_version = true
+major_on_zero = false
+build_command = """
+uv lock --upgrade-package "$PACKAGE_NAME"
+git add uv.lock
+"""
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+parse_squash_commits = true
+ignore_merge_commits = true

@@ -6,7 +6,7 @@ from typing import cast
 
 import pyperclip
 
-from .logger import logger
+from toolbox.logger import logger
 
 GACHA_HISTORY_URL_PATTERN = re.compile(
     rb"https://aki-gm-resources(?:-oversea)?\.aki-game\.(?:net|com)"
