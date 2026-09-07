@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.1.2 (2026-09-07)
+
+### Bug Fixes
+
+- Add py.typed marker to fix type checking warning
+  ([`ad8dd18`](https://github.com/jasonari/toolbox/commit/ad8dd18feb413b61b7229427a5eaf7951bd84044))
+
+
 ## v0.1.1 (2026-09-07)
 
 ### Bug Fixes
